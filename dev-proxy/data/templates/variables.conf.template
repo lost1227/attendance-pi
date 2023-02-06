@@ -1,0 +1,3 @@
+map $host $raspi_ip {
+    default ${RASPI_IP};
+}
