@@ -3,6 +3,7 @@ import { Server } from "http";
 import { AppMode, MessageType, ServerStateMessage, SwitchModeMessage, WebsocketMessage } from './models/websocket-message.model';
 import { ServerState } from "./models/server-state.model";
 import { WsManager } from "./ws-manager";
+import GT511C3 from 'gt511c3';
 
 export class App {
     private state: ServerState = ServerState.INITIALIZING;
@@ -10,6 +11,8 @@ export class App {
     private expressHttp: Express;
     private http: Server;
     private websockets: WsManager;
+
+    private reader: GT511C3;
 
     constructor() {
         this.expressHttp = express();
@@ -22,6 +25,8 @@ export class App {
         this.setupWebsockets();
 
         this.updateServerState(ServerState.CHECK_IN);
+
+        this.reader = new GT511C3("/dev/ttyAMA0");
     }
 
     private setupHttpRoutes() {

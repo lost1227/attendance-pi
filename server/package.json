@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "express": "^4.18.2",
+    "gt511c3": "github:lost1227/GT-511C3",
     "rxjs": "^7.8.0",
     "ws": "^8.12.1"
   }
