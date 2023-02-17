@@ -7,12 +7,10 @@ app.get('/', (req: Request, res: Response) => {
     res.send("Express + TypeScript Server 2");
 })
 
-app.use('/static', express.static('static'));
-
 const httpServer = app.listen(8000);
 const wss = new WebSocketServer({
     server: httpServer,
-    path: "/ws"
+    path: "/api/ws"
 });
 
 wss.on('connection', (ws: WebSocket) => {
@@ -21,8 +19,10 @@ wss.on('connection', (ws: WebSocket) => {
     ws.on('message', (data: RawData) => {
         console.log('received: %s', data);
 
-        ws.send("echo: " + data);
+        ws.send(data.toString());
     })
 
-    ws.send('something');
+    ws.send(JSON.stringify({
+        type: "setup"
+    }));
 })
