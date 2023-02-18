@@ -1,18 +1,64 @@
 import express, { Express, Request, Response  } from 'express';
 import { Server } from "http";
-import { AppMode, MessageType, ServerStateMessage, SwitchModeMessage, WebsocketMessage } from './models/websocket-message.model';
+import { AppMode, AttendanceEventMessage, AttendanceEventType, MessageType, ServerStateMessage, SwitchModeMessage, WebsocketMessage } from './models/websocket-message.model';
 import { ServerState } from "./models/server-state.model";
 import { WsManager } from "./ws-manager";
-import GT511C3 from 'gt511c3';
+import { FingerprintManager } from './fingerprint-manager';
+import { Subscription } from 'rxjs';
+
+interface AppState {
+    state: ServerState;
+
+    setUp(app: App): Promise<void>;
+    tearDown(app: App): Promise<void>;
+}
+
+class InitializingState implements AppState {
+    state: ServerState = ServerState.INITIALIZING;
+
+    async setUp(app: App) {}
+
+    async tearDown(app: App) {}
+
+}
+
+class CheckinState implements AppState {
+    state = ServerState.CHECK_IN;
+
+    async setUp(app: App) {
+        await app.reader.ledOn();
+
+        app.reader.identify().subscribe((result) => {
+            app.websockets.broadcastMessage(new AttendanceEventMessage(
+                result.id,
+                result.success ? AttendanceEventType.CHECK_IN : AttendanceEventType.ERROR_FINGERPRINT,
+                result.error
+            ));
+        });
+    }
+    async tearDown(app: App) {
+        await app.reader.ledOff();
+    }
+
+}
+
+class CheckoutState extends CheckinState {
+
+}
 
 export class App {
-    private state: ServerState = ServerState.INITIALIZING;
+    private states = {
+        [ServerState.INITIALIZING]: new InitializingState(),
+        [ServerState.CHECK_IN]: new CheckinState(),
+        [ServerState.CHECK_OUT]: new CheckoutState()
+    }
 
-    private expressHttp: Express;
-    private http: Server;
-    private websockets: WsManager;
+    private currState = this.states[ServerState.INITIALIZING];
 
-    private reader: GT511C3;
+    public expressHttp: Express;
+    public http: Server;
+    public websockets: WsManager;
+    public reader: FingerprintManager;
 
     constructor() {
         this.expressHttp = express();
@@ -21,12 +67,20 @@ export class App {
 
         this.http = this.expressHttp.listen(8000);
 
+        console.info("Http server listening at %s", JSON.stringify(this.http.address()));
+
         this.websockets = new WsManager(this.http);
         this.setupWebsockets();
 
-        this.updateServerState(ServerState.CHECK_IN);
+        console.info("Websocket server is up");
 
-        this.reader = new GT511C3("/dev/ttyAMA0");
+        this.reader = new FingerprintManager();
+    }
+
+    public async init() {
+        console.info("Initializing fingerprint reader");
+        await this.reader.init();
+        this.setState(ServerState.CHECK_IN);
     }
 
     private setupHttpRoutes() {
@@ -37,7 +91,7 @@ export class App {
 
     private setupWebsockets() {
         this.websockets.getClientConnectionStream().subscribe((cc) => {
-            cc.sendMessage(new ServerStateMessage(this.state));
+            cc.sendMessage(new ServerStateMessage(this.currState.state));
         })
 
         this.websockets.getIncomingMessageObservable().subscribe((message) => {
@@ -48,16 +102,30 @@ export class App {
         });
     }
 
-    private updateServerState(state: ServerState) {
-        this.state = state;
-        this.websockets.broadcastMessage(new ServerStateMessage(state));
-    }
-
     private switchMode(mode: AppMode) {
-        switch(this.state) {
+        switch(this.currState.state) {
             case ServerState.INITIALIZING:
                 break;
+            case ServerState.CHECK_IN:
+                this.setState(ServerState.CHECK_OUT);
+                break;
+            case ServerState.CHECK_OUT:
+                this.setState(ServerState.CHECK_IN);
+                break;
         }
+    }
+
+    private async setState(state: ServerState) {
+        const newState = this.states[state];
+        const oldState = this.currState;
+        this.currState = newState;
+
+        console.debug("Switching from state %s to %s", oldState.state, newState.state);
+
+        await oldState.tearDown(this);
+        await newState.setUp(this);
+
+        this.websockets.broadcastMessage(new ServerStateMessage(this.currState.state));
     }
 
 }

@@ -42,6 +42,7 @@ export class AttendanceEventMessage implements WebsocketMessage {
 
     constructor(
         public studentId: number,
-        public event: AttendanceEventType
+        public event: AttendanceEventType,
+        public error?: string
     ) {}
 }

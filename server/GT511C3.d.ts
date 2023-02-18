@@ -1,32 +1,32 @@
 declare module "gt511c3" {
     export default class GT511C3 {
-        public static NO_EXTRA_INFO: number;
-        public static EXTRA_INFO: number;
-        public static LED_OFF: number;
-        public static LED_ON: number;
-        public static NOT_BEST_IMAGE: number;
-        public static BEST_IMAGE: number;
+        public readonly NO_EXTRA_INFO: number;
+        public readonly EXTRA_INFO: number;
+        public readonly LED_OFF: number;
+        public readonly LED_ON: number;
+        public readonly NOT_BEST_IMAGE: number;
+        public readonly BEST_IMAGE: number;
 
-        public static NACK_TIMEOUT: number;
-        public static NACK_INVALID_BAUDRATE: number;
-        public static NACK_INVALID_POS: number;
-        public static NACK_IS_NOT_USED: number;
-        public static NACK_IS_ALREADY_USED: number;
-        public static NACK_COMM_ERR: number;
-        public static NACK_VERIFY_FAILED: number;
-        public static NACK_IDENTIFY_FAILED: number;
-        public static NACK_DB_IS_FULL: number;
-        public static NACK_DB_IS_EMPTY: number;
-        public static NACK_TURN_ERR: number;
-        public static NACK_BAD_FINGER: number;
-        public static NACK_ENROLL_FAILED: number;
-        public static NACK_IS_NOT_SUPPORTED: number;
-        public static NACK_DEV_ERR: number;
-        public static NACK_CAPTURE_CANCELED: number;
-        public static NACK_INVALID_PARAM: number;
-        public static NACK_FINGER_IS_NOT_PRESSED: number;
+        public readonly NACK_TIMEOUT: number;
+        public readonly NACK_INVALID_BAUDRATE: number;
+        public readonly NACK_INVALID_POS: number;
+        public readonly NACK_IS_NOT_USED: number;
+        public readonly NACK_IS_ALREADY_USED: number;
+        public readonly NACK_COMM_ERR: number;
+        public readonly NACK_VERIFY_FAILED: number;
+        public readonly NACK_IDENTIFY_FAILED: number;
+        public readonly NACK_DB_IS_FULL: number;
+        public readonly NACK_DB_IS_EMPTY: number;
+        public readonly NACK_TURN_ERR: number;
+        public readonly NACK_BAD_FINGER: number;
+        public readonly NACK_ENROLL_FAILED: number;
+        public readonly NACK_IS_NOT_SUPPORTED: number;
+        public readonly NACK_DEV_ERR: number;
+        public readonly NACK_CAPTURE_CANCELED: number;
+        public readonly NACK_INVALID_PARAM: number;
+        public readonly NACK_FINGER_IS_NOT_PRESSED: number;
 
-        public fimrwareVersion: string;
+        public firmwareVersion: string;
         public isoAreaMaxSize: number;
         public deviceSerialNumber: string;
         public serialPort: string;
@@ -78,7 +78,7 @@ declare module "gt511c3" {
         /**
          * Send the CHANGE_BAUDRATE command to the fingerprint module to change the module baudrate.
          * If the command is acknowledged, the serialport baudrate will be updated as well.
-         * @param baudrate The new baudrate.
+         * @param baudrate The new baudrate [9600, 19200, 38400, 57600, 115200]
          */
         public changeBaudRate(baudrate: number): Promise<void>;
 
